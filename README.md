@@ -1,5 +1,10 @@
 # Credit Risk Scorecard: Lending Club Default Prediction
 
+### ▶ [**Try the live demo**](https://credit-risk-scorecard-9skv.onrender.com)
+
+Score an applicant and see the reasons behind the decision. Free hosting, so
+the first visit after a quiet spell takes about 50 seconds to wake.
+
 Predicting loan default from application data, built to demonstrate credit risk
 modelling, **rigorous data preparation**, and explainability.
 
@@ -384,13 +389,15 @@ deployment); and bureau data, which is what would actually move AUC.
 
 ## Live demo
 
+**[▶ Open the live demo](https://credit-risk-scorecard-9skv.onrender.com)**
+
 `app.py` scores a single applicant and returns a credit score plus the
 SHAP-derived reasons behind it, which is the adverse-action output a lender
 would need.
 
-To publish it, see "Hosting it publicly" below. Render's free tier sleeps a
-service after about 15 minutes of inactivity, so the first visit after a quiet
-spell takes roughly 50 seconds to wake.
+Hosted free on Render, whose free tier sleeps a service after about 15 minutes
+of inactivity. The first visit after that takes roughly 50 seconds to wake;
+every visit afterwards is instant.
 
 ```bash
 pip install -r requirements.txt
