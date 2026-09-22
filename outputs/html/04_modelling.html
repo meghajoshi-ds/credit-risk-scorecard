@@ -8814,8 +8814,8 @@ one extra column.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>Including <code>int_rate</code> lifts AUC from 0.681 to 0.704 — about 2.4 points,
-and KS from 0.264 to 0.300.</strong> That is a substantial gain, and it is exactly
+<p><strong>Including <code>int_rate</code> lifts AUC from 0.680 to 0.704 — about 2.4 points,
+and KS from 0.265 to 0.299.</strong> That is a substantial gain, and it is exactly
 why leakage is dangerous rather than obvious: a model reported at 0.70 looks
 materially better in a portfolio review than one at 0.68, and nothing in the
 validation output would reveal the problem.</p>
@@ -9063,8 +9063,8 @@ set remains genuinely unseen and the score below is a clean estimate.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>LightGBM improves on the baseline by about 1 AUC point</strong> (0.681 to 0.691,
-KS 0.264 to 0.283). That a far more complex model buys so little is a
+<p><strong>LightGBM improves on the baseline by about 1 AUC point</strong> (0.680 to 0.690,
+KS 0.265 to 0.283). That a far more complex model buys so little is a
 genuinely useful finding, and it is the kind of result that gets buried when
 people only report the winner.</p>
 <p>What it says is that the signal in these 14 application fields is close to
@@ -9857,7 +9857,7 @@ on a 22-loan denominator, and it is the same mistake the Wilson intervals in
 Phase 4 were introduced to guard against.</p>
 <p>Population deciles put roughly 3,000 applicants in every band, so each rate
 is estimated precisely enough to be meaningful — and the resulting default
-rate falls cleanly from <strong>40.6% to 4.9%</strong>, an 8x risk gradient across the
+rate falls cleanly from <strong>40.0% to 5.2%</strong>, an 8x risk gradient across the
 book, without a single inversion.</p>
 <p>Population deciles are also what a credit risk team actually reports, for
 exactly this reason. So that is what the scorecard is validated on, with the
@@ -9981,7 +9981,7 @@ what the conversation with a credit policy team is actually about.</p>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Cut-offs are drawn from the *observed* score distribution rather than a</span>
-<span class="c1"># hard-coded range. Section 5.10 showed scores span roughly 431-575, so a</span>
+<span class="c1"># hard-coded range. Section 5.10 showed scores span roughly 462-603, so a</span>
 <span class="c1"># generic 520-660 ladder would price almost the whole book out and produce a</span>
 <span class="c1"># meaningless table.</span>
 <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
@@ -10194,11 +10194,11 @@ Logistic regression 0.6804 0.3609 0.2654 0.13977
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Phases-5%E2%80%938-summary">Phases 5–8 summary<a class="anchor-link" href="#Phases-5%E2%80%938-summary">¶</a></h2><p><strong>Results.</strong> Logistic regression reaches AUC 0.681 / KS 0.264 on held-out
-data; LightGBM reaches 0.691 / 0.283, about 1 AUC point better. Five-fold CV
+<h2 id="Phases-5%E2%80%938-summary">Phases 5–8 summary<a class="anchor-link" href="#Phases-5%E2%80%938-summary">¶</a></h2><p><strong>Results.</strong> Logistic regression reaches AUC 0.680 / KS 0.265 on held-out
+data; LightGBM reaches 0.690 / 0.283, about 1 AUC point better. Five-fold CV
 (0.677 +/- 0.004) confirms the baseline is stable.</p>
 <p><strong>The leakage trade-off, quantified.</strong> Adding <code>int_rate</code> is worth 2.4 AUC
-points (0.681 to 0.704) — a tempting gain that is not real predictive skill,
+points (0.680 to 0.704) — a tempting gain that is not real predictive skill,
 and that cannot be used at decision time because the rate does not exist
 until after the risk assessment. Reporting both numbers is the honest form of
 that decision.</p>

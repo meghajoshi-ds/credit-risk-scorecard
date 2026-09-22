@@ -318,7 +318,7 @@ applicants each) are monotonic across all ten bands and are what credit teams
 actually report. Both tables are shown rather than quietly selecting the
 favourable one.
 
-**The realised score range is 431–575, not the full 300–850.** This is a direct
+**The realised score range is 462–603, not the full 300–850.** This is a direct
 consequence of AUC 0.68 — a narrow probability range maps to a narrow score
 range. Rescaling to fill 300–850 would look more familiar but would imply
 discriminating power the model does not have, so the anchoring is left honest.

@@ -358,8 +358,8 @@ leak_cmp = pd.DataFrame([
 leak_cmp
 
 # %% [markdown]
-# **Including `int_rate` lifts AUC from 0.681 to 0.704 — about 2.4 points,
-# and KS from 0.264 to 0.300.** That is a substantial gain, and it is exactly
+# **Including `int_rate` lifts AUC from 0.680 to 0.704 — about 2.4 points,
+# and KS from 0.265 to 0.299.** That is a substantial gain, and it is exactly
 # why leakage is dangerous rather than obvious: a model reported at 0.70 looks
 # materially better in a portfolio review than one at 0.68, and nothing in the
 # validation output would reveal the problem.
@@ -444,8 +444,8 @@ model_cmp["AUC_gain_vs_baseline"] = (model_cmp.AUC - model_cmp.AUC.iloc[0]).roun
 model_cmp
 
 # %% [markdown]
-# **LightGBM improves on the baseline by about 1 AUC point** (0.681 to 0.691,
-# KS 0.264 to 0.283). That a far more complex model buys so little is a
+# **LightGBM improves on the baseline by about 1 AUC point** (0.680 to 0.690,
+# KS 0.265 to 0.283). That a far more complex model buys so little is a
 # genuinely useful finding, and it is the kind of result that gets buried when
 # people only report the winner.
 #
@@ -790,7 +790,7 @@ deciles, mono_decile = band_table(pd.qcut(scores, 10, duplicates="drop"), "Popul
 #
 # Population deciles put roughly 3,000 applicants in every band, so each rate
 # is estimated precisely enough to be meaningful — and the resulting default
-# rate falls cleanly from **40.6% to 4.9%**, an 8x risk gradient across the
+# rate falls cleanly from **40.0% to 5.2%**, an 8x risk gradient across the
 # book, without a single inversion.
 #
 # Population deciles are also what a credit risk team actually reports, for
@@ -848,7 +848,7 @@ plt.show()
 
 # %%
 # Cut-offs are drawn from the *observed* score distribution rather than a
-# hard-coded range. Section 5.10 showed scores span roughly 431-575, so a
+# hard-coded range. Section 5.10 showed scores span roughly 462-603, so a
 # generic 520-660 ladder would price almost the whole book out and produce a
 # meaningless table.
 rows = []
@@ -898,12 +898,12 @@ print(final.to_string(index=False))
 # %% [markdown]
 # ## Phases 5–8 summary
 #
-# **Results.** Logistic regression reaches AUC 0.681 / KS 0.264 on held-out
-# data; LightGBM reaches 0.691 / 0.283, about 1 AUC point better. Five-fold CV
+# **Results.** Logistic regression reaches AUC 0.680 / KS 0.265 on held-out
+# data; LightGBM reaches 0.690 / 0.283, about 1 AUC point better. Five-fold CV
 # (0.677 +/- 0.004) confirms the baseline is stable.
 #
 # **The leakage trade-off, quantified.** Adding `int_rate` is worth 2.4 AUC
-# points (0.681 to 0.704) — a tempting gain that is not real predictive skill,
+# points (0.680 to 0.704) — a tempting gain that is not real predictive skill,
 # and that cannot be used at decision time because the rate does not exist
 # until after the risk assessment. Reporting both numbers is the honest form of
 # that decision.
