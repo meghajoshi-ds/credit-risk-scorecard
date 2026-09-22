@@ -13,3 +13,4 @@ data/lending_club_clean.csv
 
 # Local preview only; GitHub renders README.md directly.
 outputs/html/README.html
+outputs/html/INTERVIEW_PREP.html
