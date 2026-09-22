@@ -666,8 +666,14 @@ with tab_model:
 - **163,987** Lending Club loans, 18.3% default rate
 - **60/20/20** train / validation / test split
 - **LightGBM**, AUC 0.690 · KS 0.283 · Brier 0.139
-- Logistic regression baseline reaches 0.680, so the
-  complex model wins by about **one AUC point**
+- Logistic baseline reaches 0.680, so the complex model
+  wins by about **one AUC point**
+- **Validated out-of-time** on a dated extract: trained on
+  2007–2013, tested on an unseen 2015 vintage
+- Also built as a **hand-applicable points table** (53 rows,
+  7 characteristics) costing 1.6 AUC points
+- **Fair lending screened**: passes the four-fifths rule in
+  every region and state
             """
         )
         st.markdown(
@@ -683,9 +689,11 @@ with tab_model:
         st.markdown("### What it cannot do")
         st.markdown(
             """
-- **No out-of-time validation.** The data has no origination
-  date, so only a random split was possible. Economic
-  conditions shift; a random split flatters the model.
+- **Probabilities drift over time.** Out-of-time testing
+  showed the model under-predicts default by 6–7 points when
+  applied forward, having trained on vintages defaulting at
+  15–16% and been applied to ones at 23–25%. Ranking holds;
+  the absolute level needs recalibrating per period.
 - **Accepted loans only.** Everyone Lending Club declined is
   absent, so this learned who defaults *among applicants
   already approved*. The fix is reject inference.
