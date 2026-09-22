@@ -1,5 +1,10 @@
 # Credit Risk Scorecard: Lending Club Default Prediction
 
+### ▶ [**Try the live demo**](https://credit-risk-scorecard.onrender.com)
+
+Score an applicant and see the reasons behind the decision. Free hosting, so
+the first visit after a quiet spell takes about 50 seconds to wake up.
+
 Predicting loan default from application data, built to demonstrate credit risk
 modelling, **rigorous data preparation**, and explainability.
 
@@ -384,9 +389,15 @@ deployment); and bureau data, which is what would actually move AUC.
 
 ## Live demo
 
+**[▶ Open the live demo](https://credit-risk-scorecard.onrender.com)**
+
 `app.py` scores a single applicant and returns a credit score plus the
 SHAP-derived reasons behind it, which is the adverse-action output a lender
 would need.
+
+Hosted free on Render, which sleeps the service after about 15 minutes of
+inactivity. The first visit after that takes roughly 50 seconds to wake; every
+visit afterwards is instant.
 
 ```bash
 pip install -r requirements.txt
@@ -398,9 +409,8 @@ after a clone without executing any notebooks first.
 
 ### Hosting it publicly
 
-Two options, both free. The repository is configured for either.
-
-**Render** (recommended, since services are public by default):
+Deployed on Render. The repository is configured so this is a one-click
+deploy, and Render services are public by default:
 
 1. Sign in at [render.com](https://render.com) with GitHub
 2. **New** then **Blueprint**, and pick this repository
@@ -411,17 +421,14 @@ On the free tier the service sleeps after about 15 minutes of inactivity, so
 the first visit after a quiet spell takes roughly 50 seconds to wake. Every
 visit after that is instant.
 
-**Streamlit Community Cloud** ([share.streamlit.io](https://share.streamlit.io)):
-sign in with GitHub, choose **New app**, then this repository, branch `main`,
-main file `app.py`. Faster to set up, but check the app's sharing setting
-afterwards: apps can default to requiring a sign-in, which is easy to miss
-because the owner is always let through. Test the URL in a private browser
-window to see what a visitor actually gets.
+Streamlit Community Cloud is the obvious alternative, but its apps can default
+to requiring a sign-in, which is easy to miss because the owner is always let
+through. If you use it, test the URL in a private browser window to see what a
+visitor actually gets.
 
-Either way, `requirements.txt` holds only the runtime dependencies so the build
+`requirements.txt` holds only the runtime dependencies so the build
 stays fast, the models are committed, and `.streamlit/config.toml` sets the
-theme and headless mode. Once the app is live, add its URL to the top of this
-README.
+theme and headless mode.
 
 ## Setup
 
