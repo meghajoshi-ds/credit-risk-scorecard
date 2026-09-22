@@ -1,0 +1,364 @@
+# Credit Risk Scorecard — Lending Club Default Prediction
+
+Predicting loan default from application data, built to demonstrate credit risk
+modelling, **rigorous data preparation**, and explainability.
+
+The emphasis throughout is on *defensible* decisions rather than maximum
+accuracy. Every cleaning step traces to documented evidence, every claim is
+tested rather than assumed, and the results below include the ones that came
+out worse than hoped.
+
+---
+
+## Headline results
+
+| Model | AUC | Gini | KS | Brier |
+|---|---|---|---|---|
+| Logistic regression (baseline) | 0.681 | 0.361 | 0.265 | 0.225 |
+| **LightGBM** | **0.691** | **0.382** | **0.283** | **0.219** |
+| Logistic regression *with* `int_rate` | 0.704 | 0.409 | 0.300 | 0.219 |
+
+5-fold CV on the baseline: **0.677 ± 0.004** — the estimate is stable.
+
+The third row is a **leakage control, not a result.** See "The `int_rate`
+decision" below.
+
+![ROC curves for all three models, and the KS separation plot for LightGBM](outputs/figures/04_roc_ks.png)
+
+*Left: all three models, including the leaky variant (dashed) for reference.
+Right: KS is the widest gap between the cumulative good and bad distributions.*
+
+**Scorecard:** probabilities convert to a 300–850 score whose default rate
+falls monotonically across all ten population deciles, from **40.6%** in the
+worst band to **4.9%** in the best — an 8x risk gradient.
+
+---
+
+## The data
+
+163,987 Lending Club loans, 15 columns, **18.3% default rate**.
+
+Because positives are 18.3%, a model predicting "everyone repays" scores 81.7%
+accuracy while being useless. **Accuracy is never reported in this project** —
+AUC, KS and Brier are used instead.
+
+---
+
+## Project structure
+
+```
+credit-risk-project/
+├── data/
+│   ├── lending_club_raw.csv        # untouched source
+│   └── lending_club_clean.csv      # 24 cols (15 raw + 9 engineered)
+├── notebooks/
+│   ├── 01_explore.ipynb            # Phase 2 — profiling
+│   ├── 02_clean_features.ipynb     # Phase 3 — cleaning & features
+│   ├── 03_eda.ipynb                # Phase 4 — EDA, WoE/IV
+│   ├── 04_modelling.ipynb          # Phases 5-8 — models, SHAP, scorecard
+│   └── src/                        # percent-format .py source of each notebook
+├── outputs/
+│   ├── figures/                    # 13 generated charts
+│   ├── models/                     # serialised models + scorecard config
+│   └── model_results.csv
+├── app.py                          # Phase 10 — Streamlit demo
+├── requirements.txt
+└── README.md
+```
+
+Run order: notebooks 01 → 04. Notebook 02 writes the clean CSV that 03 and 04
+depend on.
+
+`notebooks/src/` holds each notebook in percent-format `.py` — the same content
+as the `.ipynb`, but reviewable and diffable in git, which JSON notebooks are
+not. `python notebooks/src/build.py <src.py> <out.ipynb>` regenerates a
+notebook from its source.
+
+---
+
+## Phase 2 — Profiling: what the data actually contained
+
+Profiling produced a numbered list of problems with evidence attached, so that
+every Phase 3 action could point at a reason.
+
+**The most important finding: `emp_length` missingness is not random.** The
+5,804 applicants with no employment length default at **26.3%** versus **18.0%**
+for those with it — a 1.46x lift, Fisher exact p < 0.001.
+
+A routine `fillna(median)` would have erased that signal entirely, making these
+applicants look average. Instead they get an explicit flag.
+
+**Significance was tested, not eyeballed.** Five other columns showed apparent
+lifts too — `revol_util` missing rows default at 22.3%. But on 193 rows that is
+not distinguishable from chance (p = 0.16). Fisher exact tests on all six
+columns confirmed **only `emp_length` carries real signal**, so exactly one flag
+was built rather than six spurious ones.
+
+Other findings: three columns are missing on the *same* 29 rows (one block of
+records with no bureau data, not three separate problems); `annual_inc` skew is
+35.5; categoricals were tested for formatting inconsistency and are clean; and
+there are **zero duplicate rows**, so `drop_duplicates()` correctly does not
+appear in the pipeline.
+
+---
+
+## Phase 3 — Cleaning: decisions and rejected alternatives
+
+| Finding | Decision | Why not the obvious alternative |
+|---|---|---|
+| `emp_length` missing, non-random | Impute **+ flag** | A plain `fillna` erases a 1.46x risk signal |
+| Trace missingness (4–193 rows) | Median, no flags | Apparent lifts failed significance testing |
+| `term` stored as text | Regex parse + assert | A dict lookup breaks silently on a new product |
+| `revol_util` > 100 (max 150.7) | **Keep uncapped** + flag | Clipping destroys the ordering carrying the signal |
+| `annual_inc` skew 35.5 | Add `log_annual_inc` | Dropping outliers deletes real applicants |
+| 50 `addr_state` levels | Map to 4 Census regions | Target encoding would leak the label |
+| Rare `home_ownership` levels | Collapse to `OTHER` | A 1-loan dummy is memorisation, not learning |
+
+**On `revol_util` above 100%:** the brief flagged these for investigation. They
+are 289 rows clustered tightly between 100.1 and 150.7 — not scattered the way
+a units error would be — and they default at **25.6%** against an 18.3% base.
+There is a real mechanism (interest and fees pushing a balance over its limit),
+so they are genuine and informative. Capping them to 100 would have flattened
+the most distressed borrowers onto the same value as merely maxed-out ones.
+
+**Nine engineered features**, each from domain reasoning: `loan_to_income` and
+`payment_to_income` (affordability), `acct_open_rate` (credit-seeking
+velocity), `log_annual_inc` (linear-model conditioning), `has_delinquency`
+(robust binary from a sparse count), `over_limit`, `emp_length_missing`,
+`term_months`, `region`.
+
+**Imputation is deliberately *not* in the clean CSV.** Only row-wise
+deterministic transforms happen in Phase 3; anything that learns a value from
+the data — medians, encoder categories — is fitted inside the Phase 5 pipeline
+on the training fold only. The clean file still contains `NaN`s by design. This
+also lets LightGBM use its native missing-value handling, which learns a
+direction per split and beats median filling.
+
+**15 automated validation checks** gate the save. One of them caught a real
+error during development: derived features inherit missingness from their
+inputs (`loan_to_income` is null wherever `annual_inc` is), so the correct test
+is not "no nulls" but **"missing exactly where its inputs are missing"** —
+inheriting missingness is fine, inventing it is a bug.
+
+---
+
+## Phase 4 — EDA: Weight of Evidence / Information Value
+
+IV is the standard screening tool in scorecard work — it handles categoricals
+natively and catches non-monotonic relationships that correlation misses.
+
+| Feature | IV | |
+|---|---|---|
+| `int_rate` | 0.382 | strong — *excluded, see below* |
+| `loan_to_income` | 0.145 | **best legitimate feature** |
+| `term` / `term_months` | 0.129 | medium |
+| `revol_util` | 0.079 | weak |
+| `dti` | 0.074 | weak |
+| `region` | 0.001 | not predictive |
+
+![Information Value by feature, with int_rate highlighted in red](outputs/figures/03_information_value.png)
+
+*`int_rate` (red) dominates — but note it falls short of the 0.5 "suspicious"
+line. The heuristic alone would not have flagged it.*
+
+**The engineered features are a mixed result, reported honestly.**
+`loan_to_income` is the single best non-leaky feature in the dataset, beating
+every column it was built from. But `payment_to_income` **underperformed**
+(0.058) — dividing by term folded a strong variable into the ratio and blurred
+it. Three features (`acct_open_rate`, `has_delinquency`, `over_limit`) score
+below 0.02 and are kept only for the tree model.
+
+**Significance ≠ importance.** `emp_length_missing` is highly significant *and*
+low-IV (0.009). Both are correct: the Fisher test asks "is the effect real?"
+(yes, emphatically); IV asks "how much does it move the whole portfolio?" (not
+much — it fires on 3.5% of applicants). A large effect on a small group is
+exactly this. The flag is kept because it sharpens judgement on the applicants
+it fires for, but it is not expected near the top of a global importance chart.
+
+![Default rate by loan purpose with 95% confidence intervals, and by loan term](outputs/figures/03_default_by_category.png)
+
+*Small business lending is the riskiest purpose, and 60-month loans default at
+roughly twice the 36-month rate. The confidence intervals show which thin
+categories are not actually distinguishable from the base rate.*
+
+**A second, subtler process artefact.** Verified applicants default *more*
+(20.1%) than unverified ones (15.2%) — which reads backwards until you look at
+what they borrow: median loan **$14,000 vs $8,900**, and 29.6% take the 60-month
+term versus 5.1%. Lending Club *chose to verify the riskier applications*. So
+`verification_status` partly encodes the lender's own suspicion rather than a
+borrower property. Weak enough to keep, important enough to flag before anyone
+reads a SHAP plot and concludes verification causes default.
+
+---
+
+## The `int_rate` decision
+
+The brief asked for "a deliberate decision and a clear explanation". 
+
+**Evidence it leaks:** default rate rises perfectly monotonically across all ten
+interest-rate deciles, from ~6% to ~33%. Nothing in real credit data is that
+clean by accident. The mechanism is known — Lending Club ran their own risk
+model at origination and *set the rate from it*. `int_rate` is a downstream
+summary of a risk assessment that already happened, not something the applicant
+brought to the application.
+
+![Default rate rising monotonically across all ten interest rate deciles](outputs/figures/01_int_rate_leakage.png)
+
+*Ten out of ten deciles in order, from ~5% to ~36%. Real borrower behaviour is
+never this tidy — this is the shape of a variable derived from a risk model.*
+
+**Worth noting what the evidence is *not*.** `int_rate`'s IV of 0.38 sits
+*below* the 0.5 threshold that the credit-risk rule of thumb reserves for
+suspected leakage. **The heuristic does not catch this.** Domain knowledge of
+the data-generating process is what catches it; IV only corroborates that the
+column is unusually dominant. A threshold is a prompt to investigate, never a
+verdict — and reporting that honestly matters more than making the rule of
+thumb look prescient.
+
+**Decision: exclude it, and quantify the cost.** It is worth 2.4 AUC points
+(0.681 → 0.704). That gain is not predictive skill and cannot be used anyway:
+scoring a new applicant would require their interest rate, but the rate is set
+*from* the risk assessment. The input does not exist at decision time.
+
+Reporting both numbers is the honest form of the decision. Silently dropping
+the column would hide the most interesting trade-off in the project.
+
+---
+
+## Phases 5–6 — Modelling
+
+**Multicollinearity was checked with VIF, and the first attempt failed.**
+`total_acc` and `acct_open_rate` both exceeded the threshold — unsurprising in
+hindsight, since `acct_open_rate` was *defined* as `total_acc / (longest_credit_length + 1)`.
+Phase 4's pairwise correlation scan (|r| > 0.7) missed it because the
+relationship sits just below that line. `acct_open_rate` was dropped from the
+linear set (it also had the lowest IV in the set); all VIFs then fell below 5.
+
+A subtlety worth recording: VIF had to be computed on **imputed** data. Using
+`dropna()` removes every row where `emp_length` is missing — exactly the
+population where `emp_length_missing` equals 1 — turning the flag into a
+constant column and returning `NaN`.
+
+**The two model families get different feature sets, deliberately.** Logistic
+regression gets a curated, decorrelated set because unstable coefficients would
+defeat the entire reason for using it. LightGBM gets everything, plus raw
+`NaN`s to handle natively.
+
+**LightGBM beat the baseline by ~1 AUC point.** That a much more complex model
+buys so little is itself the finding: the signal in 14 coarse application fields
+is close to linear, with few rich interactions left to discover. **This changes
+the deployment recommendation** — one AUC point does not obviously justify
+losing coefficient-level explainability in a regulated setting, which is
+precisely why lenders still run logistic scorecards.
+
+**Calibration is imperfect, by construction.** Both models sit above the
+diagonal because `class_weight="balanced"` inflates the minority class to
+correct the imbalance, systematically over-stating absolute default probability
+while preserving ranking. Tolerable for a scorecard (which needs ranking and
+monotonicity) but **these are not literal default probabilities**, and the model
+would need recalibrating before any pricing use.
+
+---
+
+## Phase 7 — Explainability
+
+SHAP global importance independently reproduces the Phase 4 IV ranking — a
+different method on a different model agreeing on what matters. As predicted,
+`emp_length_missing` ranks low globally despite being significant.
+
+![SHAP beeswarm showing each feature's value against its effect on predicted risk](outputs/figures/04_shap_beeswarm.png)
+
+*Each dot is one applicant. Red means a high value for that feature; position
+shows how much it pushed their risk up or down. High utilisation and 60-month
+terms push right (riskier); high income pushes left.*
+
+The deliverable the brief asked for is **per-applicant** explanation, since a
+declined applicant is entitled to the reasons for *their* decision, not a
+description of the model. Example output:
+
+```
+Application assessed at 86.2% estimated default risk.
+The factors that counted most against this application were:
+  1. length of loan term requested (your value: 60)
+  2. size of loan relative to your income (your value: 0.44)
+  3. existing debt relative to your income (your value: 32.03)
+  4. how much of your available credit is already used (your value: 74.2)
+```
+
+---
+
+## Phase 8 — Scorecard
+
+Standard points-to-double-the-odds conversion (PDO = 20, 600 = 50:1 odds).
+
+![Score distribution and observed default rate falling across score bands](outputs/figures/04_scorecard.png)
+
+*Right-hand panel is the validation that matters: default rate falls at every
+one of the ten population deciles, 40.6% down to 4.9%.*
+
+**Monotonicity was validated, and how you band matters.** Equal-width bands
+*failed* — the top band held 22 loans, one of which defaulted, producing a
+4.55% rate that inverted against the band below. That is sampling noise on a
+22-loan denominator, not a flaw in the score. Population deciles (~3,000
+applicants each) are monotonic across all ten bands and are what credit teams
+actually report. Both tables are shown rather than quietly selecting the
+favourable one.
+
+**The realised score range is 431–575, not the full 300–850.** This is a direct
+consequence of AUC 0.68 — a narrow probability range maps to a narrow score
+range. Rescaling to fill 300–850 would look more familiar but would imply
+discriminating power the model does not have, so the anchoring is left honest.
+
+**Cut-off selection is a policy choice, not a statistical one:**
+
+| Reject worst | Cut-off | Approval rate | Default rate approved | Good loans rejected |
+|---|---|---|---|---|
+| 10% | 465 | 90.8% | 16.01% | 1,785 |
+| 20% | 474 | 81.3% | 14.34% | 3,957 |
+| 30% | 481 | 70.9% | 12.87% | 6,520 |
+| 50% | 492 | 51.5% | 10.36% | 11,655 |
+
+The right cut-off depends on the margin on a good loan versus loss given
+default — which is why the deliverable is the table, not a single number.
+
+---
+
+## Known limitations
+
+Stated plainly, because a model's limitations are part of its documentation:
+
+1. **No out-of-time validation.** Credit models should be validated on *later*
+   loans than they were trained on, since economic conditions shift. This
+   dataset has no origination date, so only a random split was possible. This
+   is the most significant gap.
+2. **Probabilities are over-stated** by `class_weight="balanced"` and need
+   recalibration (isotonic, or dropping class weights and tuning the threshold)
+   before any pricing or expected-loss use.
+3. **Early stopping used the test set** to pick the number of trees, which lets
+   the test set weakly influence the model. A third validation split is the
+   stricter setup.
+4. **Modest discrimination.** AUC 0.69 reflects genuinely limited inputs — no
+   bureau score, no payment history, no application date.
+5. **`verification_status` is partly a process variable**, not purely a
+   borrower attribute, and should not be interpreted causally.
+
+## With more time
+
+Out-of-time validation if dates could be sourced; proper probability
+calibration; WoE-transformed inputs for a fully traditional scorecard; formal
+fairness testing across protected-attribute proxies (`addr_state` is a
+geographic proxy that warrants disparate-impact analysis before any real
+deployment); and bureau data, which is what would actually move AUC.
+
+---
+
+## Setup
+
+```bash
+python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+jupyter lab                       # run notebooks 01 -> 04 in order
+streamlit run app.py              # interactive demo
+```

@@ -1,0 +1,11 @@
+venv/
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+
+# Keep the raw source (17MB) so the repo is runnable after a clone.
+# Exclude the cleaned file — notebook 02 regenerates it in seconds.
+data/lending_club_clean.csv
+
+# Regenerable by re-running notebook 04.
+outputs/models/
