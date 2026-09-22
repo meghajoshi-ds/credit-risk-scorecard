@@ -196,7 +196,7 @@ reads a SHAP plot and concludes verification causes default.
 The brief asked for "a deliberate decision and a clear explanation". 
 
 **Evidence it leaks:** default rate rises perfectly monotonically across all ten
-interest-rate deciles, from ~6% to ~33%. Nothing in real credit data is that
+interest-rate deciles, from ~5% to ~36%. Nothing in real credit data is that
 clean by accident. The mechanism is known — Lending Club ran their own risk
 model at origination and *set the rate from it*. `int_rate` is a downstream
 summary of a risk assessment that already happened, not something the applicant
@@ -331,24 +331,34 @@ Stated plainly, because a model's limitations are part of its documentation:
    loans than they were trained on, since economic conditions shift. This
    dataset has no origination date, so only a random split was possible. This
    is the most significant gap.
-2. **Probabilities are over-stated** by `class_weight="balanced"` and need
+2. **Selection bias — the data contains only *accepted* loans.** Every
+   applicant Lending Club declined is absent, so the model did not learn "who
+   defaults"; it learned "who defaults *among applicants already judged
+   creditworthy enough to approve*." Applied to the full through-the-door
+   population it would be optimistic, because the hardest cases were filtered
+   out before the data was recorded. The industry technique for this is
+   **reject inference**, and Lending Club publishes a rejected-applications
+   file that would partly address it. Untreated here, and material.
+3. **Probabilities are over-stated** by `class_weight="balanced"` and need
    recalibration (isotonic, or dropping class weights and tuning the threshold)
    before any pricing or expected-loss use.
-3. **Early stopping used the test set** to pick the number of trees, which lets
+4. **Early stopping used the test set** to pick the number of trees, which lets
    the test set weakly influence the model. A third validation split is the
    stricter setup.
-4. **Modest discrimination.** AUC 0.69 reflects genuinely limited inputs — no
+5. **Modest discrimination.** AUC 0.69 reflects genuinely limited inputs — no
    bureau score, no payment history, no application date.
-5. **`verification_status` is partly a process variable**, not purely a
+6. **`verification_status` is partly a process variable**, not purely a
    borrower attribute, and should not be interpreted causally.
 
 ## With more time
 
-Out-of-time validation if dates could be sourced; proper probability
-calibration; WoE-transformed inputs for a fully traditional scorecard; formal
-fairness testing across protected-attribute proxies (`addr_state` is a
-geographic proxy that warrants disparate-impact analysis before any real
-deployment); and bureau data, which is what would actually move AUC.
+Out-of-time validation if dates could be sourced; reject inference using
+Lending Club's rejected-applications file, to address the selection bias above;
+proper probability calibration; WoE-transformed inputs for a fully traditional
+points-based scorecard; formal fairness testing across protected-attribute
+proxies (`addr_state` is a geographic proxy that warrants disparate-impact
+analysis before any real deployment); and bureau data, which is what would
+actually move AUC.
 
 ---
 

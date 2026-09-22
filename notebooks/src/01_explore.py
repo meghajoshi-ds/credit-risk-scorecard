@@ -383,7 +383,7 @@ plt.show()
 
 # %% [markdown]
 # The relationship is **perfectly monotonic** across all ten deciles: default
-# risk climbs from roughly 6% in the cheapest decile to roughly 33% in the most
+# risk climbs from roughly 5% in the cheapest decile to roughly 36% in the most
 # expensive one. Nothing in a real credit dataset is that clean by accident.
 #
 # The reason is mechanical, not behavioural. Lending Club ran their own risk

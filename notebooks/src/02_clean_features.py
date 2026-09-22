@@ -268,7 +268,7 @@ print(f"over_limit = 0 : {int((df.over_limit == 0).sum()):,} loans, "
 # ## 3.6 Finding #6 — the `int_rate` decision
 #
 # Profiling showed default rate climbing monotonically across all ten interest
-# rate deciles, from ~6% to ~33%. That is because Lending Club set the rate
+# rate deciles, from ~5% to ~36%. That is because Lending Club set the rate
 # from their own internal risk grade — so `int_rate` is a *summary of a risk
 # assessment that already happened*, not an applicant characteristic.
 #
