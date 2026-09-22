@@ -377,6 +377,11 @@ one direction, trading a little fit for a structure that survives an audit.
 creditworthiness and the target is *bad*, so a positive coefficient would mean
 better applicants default more. That check is run in the notebook, not assumed.
 
+![Point spread by characteristic: how much each can move a score](outputs/figures/05_point_spread.png)
+
+*The point spread is what a credit officer cares about: how far a characteristic
+can move an applicant from its best bin to its worst.*
+
 ### What interpretability costs
 
 | Model | AUC | Gini | KS | Characteristics | Deployable as |
@@ -430,6 +435,8 @@ directly: **how much did the random split flatter the model?**
 | Random (what Phases 5&ndash;8 did) | 0.718 | 0.436 | 0.316 | 91,986 |
 | **Out-of-time (2015 held back)** | **0.696** | **0.392** | **0.286** | 94,264 |
 
+![ROC curves and AUC bars for random versus out-of-time evaluation](outputs/figures/06_oot_vs_random.png)
+
 **The random split overstates AUC by 0.022, about 3% relative.** Modest, and
 worth knowing precisely rather than guessing.
 
@@ -456,6 +463,8 @@ exists to catch, and it is invisible to a random split.
 almost double in a year. The file contains only **resolved** loans, so a 2016
 loan appears only if it had already finished &mdash; and the loans that finish
 fastest are disproportionately early payoffs.
+
+![Default rate by origination vintage, with 2016 flagged as immature](outputs/figures/06_vintage_curve.png)
 
 That is the **incomplete performance window** problem. Real scorecard
 development fixes a performance window of 18&ndash;24 months and excludes
@@ -501,6 +510,8 @@ Below **0.80** is the conventional flag. Tested across cut-offs from the 10th to
 | Northeast | 0.949 |
 | South | 0.941 |
 | Midwest | 0.928 |
+
+![Minimum adverse impact ratio by state against the 0.80 threshold](outputs/figures/07_adverse_impact.png)
 
 **No region falls below 0.80 at any cut-off, and no state does either** (lowest
 was North Carolina at 0.835). The model passes the standard screen.
