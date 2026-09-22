@@ -1,3 +1,3 @@
 model,AUC,Gini,KS,Brier
-Logistic regression,0.6806,0.3611,0.2647,0.22536
-LightGBM,0.6911,0.3821,0.2834,0.21944
+Logistic regression,0.6804,0.3609,0.2654,0.13977
+LightGBM,0.6903,0.3805,0.2833,0.13878

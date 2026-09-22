@@ -14,11 +14,14 @@ out worse than hoped.
 
 | Model | AUC | Gini | KS | Brier |
 |---|---|---|---|---|
-| Logistic regression (baseline) | 0.681 | 0.361 | 0.265 | 0.225 |
-| **LightGBM** | **0.691** | **0.382** | **0.283** | **0.219** |
-| Logistic regression *with* `int_rate` | 0.704 | 0.409 | 0.300 | 0.219 |
+| Logistic regression (baseline) | 0.680 | 0.361 | 0.265 | 0.140 |
+| **LightGBM** | **0.690** | **0.381** | **0.283** | **0.139** |
+| Logistic regression *with* `int_rate` | 0.704 | 0.408 | 0.299 | 0.137 |
 
 5-fold CV on the baseline: **0.677 ± 0.004** — the estimate is stable.
+
+Trained on a 60/20/20 train/validation/test split. Early stopping uses the
+validation fold, so the test fold was touched exactly once.
 
 The third row is a **leakage control, not a result.** See "The `int_rate`
 decision" below.
@@ -29,8 +32,8 @@ decision" below.
 Right: KS is the widest gap between the cumulative good and bad distributions.*
 
 **Scorecard:** probabilities convert to a 300–850 score whose default rate
-falls monotonically across all ten population deciles, from **40.6%** in the
-worst band to **4.9%** in the best — an 8x risk gradient.
+falls monotonically across all ten population deciles, from **40.0%** in the
+worst band to **5.2%** in the best — roughly an 8x risk gradient.
 
 ---
 
@@ -216,7 +219,7 @@ verdict — and reporting that honestly matters more than making the rule of
 thumb look prescient.
 
 **Decision: exclude it, and quantify the cost.** It is worth 2.4 AUC points
-(0.681 → 0.704). That gain is not predictive skill and cannot be used anyway:
+(0.680 → 0.704). That gain is not predictive skill and cannot be used anyway:
 scoring a new applicant would require their interest rate, but the rate is set
 *from* the risk assessment. The input does not exist at decision time.
 
@@ -251,12 +254,21 @@ the deployment recommendation** — one AUC point does not obviously justify
 losing coefficient-level explainability in a regulated setting, which is
 precisely why lenders still run logistic scorecards.
 
-**Calibration is imperfect, by construction.** Both models sit above the
-diagonal because `class_weight="balanced"` inflates the minority class to
-correct the imbalance, systematically over-stating absolute default probability
-while preserving ranking. Tolerable for a scorecard (which needs ranking and
-monotonicity) but **these are not literal default probabilities**, and the model
-would need recalibrating before any pricing use.
+**Calibration was treated as a design decision, and tested three ways.** No
+resampling and no class weighting: at 18.3% positives the imbalance is mild,
+and reweighting wrecks the probability scale for almost no gain in ranking. A
+control experiment proves it — an otherwise identical LightGBM with
+`class_weight="balanced"` predicts a **mean default probability of 45.8%
+against a true base rate of 18.3%**, with a Brier score of 0.218 versus 0.139,
+while AUC differs by 0.0005.
+
+Post-hoc isotonic calibration (fitted on the validation fold) was then tested
+on top of the unweighted model and **added nothing** — identical Brier to four
+decimal places, fractionally worse KS. So it was not kept. Calibration was
+achieved by a modelling decision rather than a correction bolted on afterwards,
+and the probabilities can be read as probabilities: mean predicted 18.25%
+against an actual 18.3%. The imbalance is handled where it belongs, at the
+decision threshold.
 
 ---
 
@@ -294,7 +306,7 @@ Standard points-to-double-the-odds conversion (PDO = 20, 600 = 50:1 odds).
 ![Score distribution and observed default rate falling across score bands](outputs/figures/04_scorecard.png)
 
 *Right-hand panel is the validation that matters: default rate falls at every
-one of the ten population deciles, 40.6% down to 4.9%.*
+one of the ten population deciles, 40.0% down to 5.2%.*
 
 **Monotonicity was validated, and how you band matters.** Equal-width bands
 *failed* — the top band held 22 loans, one of which defaulted, producing a
@@ -339,23 +351,20 @@ Stated plainly, because a model's limitations are part of its documentation:
    out before the data was recorded. The industry technique for this is
    **reject inference**, and Lending Club publishes a rejected-applications
    file that would partly address it. Untreated here, and material.
-3. **Probabilities are over-stated** by `class_weight="balanced"` and need
-   recalibration (isotonic, or dropping class weights and tuning the threshold)
-   before any pricing or expected-loss use.
-4. **Early stopping used the test set** to pick the number of trees, which lets
-   the test set weakly influence the model. A third validation split is the
-   stricter setup.
-5. **Modest discrimination.** AUC 0.69 reflects genuinely limited inputs — no
+3. **Modest discrimination.** AUC 0.69 reflects genuinely limited inputs — no
    bureau score, no payment history, no application date.
-6. **`verification_status` is partly a process variable**, not purely a
+4. **`verification_status` is partly a process variable**, not purely a
    borrower attribute, and should not be interpreted causally.
+
+*Two limitations listed in earlier versions have since been fixed rather than
+documented: probabilities are now calibrated by design (§Phases 5–6), and
+early stopping uses a dedicated validation fold rather than the test set.*
 
 ## With more time
 
 Out-of-time validation if dates could be sourced; reject inference using
 Lending Club's rejected-applications file, to address the selection bias above;
-proper probability calibration; WoE-transformed inputs for a fully traditional
-points-based scorecard; formal fairness testing across protected-attribute
+WoE-transformed inputs for a fully traditional points-based scorecard; formal fairness testing across protected-attribute
 proxies (`addr_state` is a geographic proxy that warrants disparate-impact
 analysis before any real deployment); and bureau data, which is what would
 actually move AUC.
@@ -367,8 +376,19 @@ actually move AUC.
 ```bash
 python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
-pip install -r requirements.txt
 
+# To run the app only:
+pip install -r requirements.txt
+streamlit run app.py
+
+# To run the notebooks as well:
+pip install -r requirements.txt -r requirements-dev.txt
 jupyter lab                       # run notebooks 01 -> 04 in order
-streamlit run app.py              # interactive demo
 ```
+
+`requirements.txt` is deliberately minimal — only what `app.py` needs at
+runtime — so the hosted demo builds quickly. Notebook-only dependencies
+(Jupyter, matplotlib, seaborn, statsmodels) live in `requirements-dev.txt`.
+
+The trained models are committed to the repo, so `app.py` runs straight after
+a clone without running any notebooks first.

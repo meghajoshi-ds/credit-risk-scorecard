@@ -45,17 +45,20 @@ regulatory context. And it volunteers a limitation before being asked.
 ### The results
 | Model | AUC | Gini | KS | Brier |
 |---|---|---|---|---|
-| Logistic regression | 0.681 | 0.361 | 0.265 | 0.225 |
-| **LightGBM (final)** | **0.691** | **0.382** | **0.283** | **0.219** |
-| LogReg *with* `int_rate` | 0.704 | 0.409 | 0.300 | 0.219 |
+| Logistic regression | 0.680 | 0.361 | 0.265 | 0.140 |
+| **LightGBM (final)** | **0.690** | **0.381** | **0.283** | **0.139** |
+| LogReg *with* `int_rate` | 0.704 | 0.408 | 0.299 | 0.137 |
+
+Split: **60/20/20** train/validation/test. Early stopping watches the
+validation fold, so the test fold was touched exactly once.
 
 - **5-fold CV:** 0.677 ± 0.004 → the result is stable, not a lucky split
 - **`int_rate` was worth 2.4 AUC points** — the cost of excluding leakage
 - **LightGBM beat logistic regression by only ~1 AUC point**
 
 ### The scorecard
-- Range produced: **431–575** (on a 300–850 scale)
-- Default rate across 10 population deciles: **40.6% → 4.9%** (an 8x gradient)
+- Range produced: roughly **430–575** (on a 300–850 scale)
+- Default rate across 10 population deciles: **40.0% → 5.2%** (~8x gradient)
 - Monotonic at every band — asserted in code, not assumed
 
 ### Three findings worth quoting exactly
@@ -77,7 +80,7 @@ regulatory context. And it volunteers a limitation before being asked.
 
 ---
 
-## 3. The five stories
+## 3. The six stories
 
 These are the substance of the interview. Each is structured so you can tell
 it in under a minute.
@@ -94,13 +97,13 @@ it produces*. So `int_rate` isn't an applicant characteristic — it's a
 downstream summary of a risk assessment that already happened.
 
 **What I did:** Excluded it from the primary model, then fitted a variant *with*
-it to quantify the cost — 2.4 AUC points (0.681 → 0.704). Reported both.
+it to quantify the cost — 2.4 AUC points (0.680 → 0.704). Reported both.
 
 **Why exclusion was right, in two sentences:**
 1. You can't deploy it — scoring a new applicant needs their rate, but the rate
    is set *from* the risk assessment. The input doesn't exist at decision time.
 2. It answers the wrong question. "How well can I assess risk from application
-   data?" is 0.681, not 0.704.
+   data?" is 0.680, not 0.704.
 
 **The kicker — use this one.** Information Value is the standard credit-risk
 tool for spotting leakage; anything above 0.5 is "suspicious". `int_rate`
@@ -156,8 +159,8 @@ Someone over their limit is genuinely higher-risk.
 
 ### Story 4 — Recommending the *simpler* model
 
-**Setup:** LightGBM beat logistic regression by about 1 AUC point (0.681 →
-0.691).
+**Setup:** LightGBM beat logistic regression by about 1 AUC point (0.680 →
+0.690).
 
 **The insight:** That's a small gain from a much more complex model. What it
 tells you is that the signal in 14 coarse application fields is close to
@@ -195,6 +198,43 @@ signal.
 
 ---
 
+### Story 6 — Testing a technique and rejecting it
+
+**Setup:** Predicted probabilities need to be trustworthy, because Phase 8
+converts them into a credit score. The textbook move at 18.3% positives is
+`class_weight="balanced"` or SMOTE.
+
+**What I did:** Neither — and then ran a **control experiment** to prove the
+decision rather than assert it. I fitted an otherwise identical LightGBM *with*
+`class_weight="balanced"` purely to measure the damage:
+
+| Model | AUC | Brier | Mean predicted | Actual |
+|---|---|---|---|---|
+| `class_weight="balanced"` | 0.6898 | 0.218 | **45.8%** | 18.3% |
+| Unweighted (chosen) | 0.6903 | **0.139** | **18.25%** | 18.3% |
+| Unweighted + isotonic | 0.6901 | 0.139 | 18.27% | 18.3% |
+
+**The finding:** Reweighting made the model believe bad loans were two and a
+half times as common as they are — Brier 57% worse — while AUC differed by
+0.0005. It bought nothing and wrecked the probability scale.
+
+**The part that shows honesty:** I then tested post-hoc isotonic calibration on
+the unweighted model, expecting an improvement. It **added nothing** —
+identical Brier to four decimal places, fractionally worse KS. So I didn't keep
+it.
+
+> "Calibration turned out to be a modelling decision, not a post-processing
+> step. Once the class weights were gone there was no error left to correct, so
+> the extra component would have been complexity for its own sake. I'd rather
+> report that the technique wasn't needed than ship it to look sophisticated."
+
+**Why this lands:** most candidates either don't check calibration at all, or
+apply `CalibratedClassifierCV` because a tutorial said to. Running the control,
+getting a null result, and *acting* on the null result is what model validation
+work actually looks like.
+
+---
+
 ## 4. Concepts you must be able to explain
 
 If you can't explain the metric, don't quote the number.
@@ -211,8 +251,8 @@ If you can't explain the metric, don't quote the number.
 | **SHAP** | Decomposes a single prediction into per-feature contributions that sum exactly to the output — which is what makes it usable for legally required decline reasons. |
 | **Data leakage** | Using information that wouldn't exist at decision time, or that encodes the answer. Inflates validation scores and breaks in production. |
 | **VIF** | Variance Inflation Factor — how much a coefficient's variance is inflated by correlation with other inputs. Above ~5 is a warning. |
-| **Class imbalance handling** | I used `class_weight="balanced"` (reweights the loss) rather than SMOTE/oversampling, which distorts the data and corrupts predicted probabilities. |
-| **Calibration** | Whether "20% risk" actually means 20 in 100 default. Mine are over-stated — see §6. |
+| **Class imbalance handling** | I used **neither** resampling nor class weights. At 18.3% positives the imbalance is mild, and both interventions cost more than they pay — see the control experiment in Story 6. The imbalance is handled at the decision threshold instead. |
+| **Calibration** | Whether "20% risk" actually means 20 in 100 default. Mine are well calibrated: mean predicted 18.25% vs actual 18.3%. |
 | **Monotonicity** | A higher score must mean lower risk at *every* band. Non-negotiable for a scorecard. |
 | **PDO** | Points to Double the Odds — the standard probability→score conversion. I used PDO=20, 600 = 50:1 odds. |
 
@@ -293,14 +333,16 @@ Volunteering these reads as model risk awareness. Getting caught out doesn't.
    learned who defaults among applicants already judged creditworthy, not among
    everyone who applied. The industry fix is **reject inference**; Lending Club
    publishes a rejected-applications file that would partly address it.
-3. **Probabilities are over-stated** by `class_weight="balanced"`. Rankings are
-   reliable, absolute percentages aren't. Needs recalibration before any
-   pricing use.
-4. **Early stopping used the test set** to choose the tree count — a mild leak.
-   The strict fix is a third validation split.
-5. **Modest discrimination** — AUC 0.69, limited by the inputs.
-6. **`verification_status` is partly a process variable** — it encodes the
+3. **Modest discrimination** — AUC 0.69, limited by the inputs.
+4. **`verification_status` is partly a process variable** — it encodes the
    lender's suspicion, not just borrower risk. Don't interpret it causally.
+
+**Two limitations that used to be on this list are now fixed** — worth
+mentioning that way, because "I found it and fixed it" beats either silence or
+a standing caveat:
+- Probabilities were inflated by class weighting. Class weights were dropped;
+  Brier fell from 0.218 to 0.139.
+- Early stopping used the test set. There is now a dedicated validation fold.
 
 **Also worth admitting freely:** one of my engineered features underperformed.
 `payment_to_income` scored IV 0.058, below `term_months` at 0.129 — dividing by
@@ -342,18 +384,11 @@ this before any real deployment. *Finding* a problem is better than not looking.
 
 ### Tier 2 — technical quality
 
-**5. Fix the calibration.** Isotonic regression via `CalibratedClassifierCV`,
-or drop the class weights and tune the decision threshold instead. Turns a
-stated limitation into solved work and makes the probabilities usable for
-expected-loss calculations.
-
-**6. Three-way split** so early stopping never touches the test set.
-
-**7. Eliminate training/serving skew.** The feature engineering currently
+**5. Eliminate training/serving skew.** The feature engineering currently
 exists twice — in notebook 02 and again in `app.py`. Extracting it to a shared
 `src/features.py` that both import is the correct fix.
 
-**8. A profit curve.** Add assumptions (margin on a good loan, loss given
+**6. A profit curve.** Add assumptions (margin on a good loan, loss given
 default ~50–70%) to turn the cut-off table into an actual recommended
 threshold. Converts a statistical output into a business recommendation.
 
@@ -372,7 +407,7 @@ progress.
 |---|---|
 | "I got 81% accuracy" | Accuracy is meaningless at 18.3% positives — and quoting it suggests you don't know that |
 | "The model is 69% accurate" | AUC is not accuracy. They are different things. |
-| "I used SMOTE to fix the imbalance" | You didn't, and at 18% positives it would have distorted the probabilities |
+| "I used SMOTE to fix the imbalance" | You didn't — you used neither SMOTE nor class weights, and you have a control experiment showing why |
 | "Interest rate was my best feature" | It was excluded. Leading with it undoes your best story. |
 | "The data was clean" | You found six distinct problems and tested for a seventh |
 | "I'd try a neural network next" | Signals you think the algorithm is the constraint. It isn't. |

@@ -7,8 +7,9 @@ __pycache__/
 # Exclude the cleaned file — notebook 02 regenerates it in seconds.
 data/lending_club_clean.csv
 
-# Regenerable by re-running notebook 04.
-outputs/models/
+# Model files ARE committed (~680KB total). They are small, and committing them
+# is what lets `app.py` run from a fresh clone - required for the hosted demo,
+# since Streamlit Community Cloud only has the repo, not a local notebook run.
 
 # Local preview only; GitHub renders README.md directly.
 outputs/html/README.html

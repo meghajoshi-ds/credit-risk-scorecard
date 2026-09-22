@@ -1,0 +1,8 @@
+# Additional dependencies for running the notebooks.
+# Install alongside requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
+-r requirements.txt
+jupyterlab==4.6.4
+matplotlib==3.11.2
+seaborn==0.13.2
+statsmodels==0.15.0

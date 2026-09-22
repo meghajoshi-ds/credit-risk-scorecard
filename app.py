@@ -105,8 +105,9 @@ def to_score(p, config):
 
 st.title("Credit Risk Scorecard")
 st.caption(
-    "LightGBM model — AUC 0.691, KS 0.283. Trained **without** `int_rate`, "
-    "which leaks Lending Club's own risk grade. See README for the full rationale."
+    "LightGBM — AUC 0.690, KS 0.283. Trained **without** `int_rate`, which leaks "
+    "Lending Club's own risk grade. Probabilities are calibrated (mean predicted "
+    "18.25% vs actual 18.3%). See the README for the full rationale."
 )
 
 try:
@@ -163,24 +164,27 @@ with left:
     st.metric("Credit score", score, help="300-850 scale, 20 points to double the odds")
     st.metric("Estimated default risk", f"{prob:.1%}")
 
-    # Bands follow the population deciles validated in notebook 04.
-    if score >= 500:
-        st.success("Low risk relative to this portfolio")
-    elif score >= 480:
-        st.info("Moderate risk — around the portfolio average")
-    elif score >= 465:
-        st.warning("Elevated risk")
+    # Bands are the score quintiles of the held-out test set, with the observed
+    # default rate in each. Derived from the data, not chosen by eye.
+    if score >= 551:
+        st.success("Top 20% of the portfolio — observed default rate 6.7%")
+    elif score >= 540:
+        st.info("Above average (60-80th percentile) — observed 11.7%")
+    elif score >= 530:
+        st.info("Around portfolio average (40-60th) — observed 15.8%")
+    elif score >= 517:
+        st.warning("Below average (20-40th percentile) — observed 23.2%")
     else:
-        st.error("High risk — bottom decile of the portfolio")
+        st.error("Bottom 20% of the portfolio — observed default rate 34.5%")
 
     st.caption(
-        "Scores here span roughly 431-575 rather than the full 300-850. That is a "
+        "Scores span roughly 462-603 rather than the full 300-850. That is a "
         "consequence of AUC 0.69, not a bug — a narrow probability range maps to a "
         "narrow score range. Rescaling would imply accuracy the model lacks."
     )
     st.caption(
-        "Note: `class_weight='balanced'` makes the absolute probability over-stated. "
-        "Ranking is reliable; the percentage is not a literal default probability."
+        "Probabilities are calibrated by design — no class reweighting — so the "
+        "percentage can be read as a genuine default probability."
     )
 
 with right:
