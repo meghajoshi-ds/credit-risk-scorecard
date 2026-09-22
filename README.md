@@ -1,5 +1,7 @@
 # Credit Risk Scorecard — Lending Club Default Prediction
 
+### ▶ [**Try the live demo**](REPLACE_WITH_STREAMLIT_URL) — score an applicant and see why
+
 Predicting loan default from application data, built to demonstrate credit risk
 modelling, **rigorous data preparation**, and explainability.
 
@@ -370,6 +372,34 @@ analysis before any real deployment); and bureau data, which is what would
 actually move AUC.
 
 ---
+
+## Live demo
+
+The hosted app takes an applicant's details and returns a credit score plus the
+SHAP-derived reasons behind it — the adverse-action output a lender would need.
+
+**[▶ Open the demo](REPLACE_WITH_STREAMLIT_URL)**
+
+It runs from the committed model files, so it needs no notebook execution. To
+run it locally instead:
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+### Deploying it yourself
+
+Hosted free on [Streamlit Community Cloud](https://share.streamlit.io):
+
+1. Sign in at **share.streamlit.io** with GitHub
+2. **New app** → pick this repository, branch `main`, main file `app.py`
+3. **Deploy** — the first build takes a few minutes
+
+The repository is already configured for this: `requirements.txt` holds only
+the runtime dependencies, the trained models are committed, and
+`.streamlit/config.toml` sets the theme. Once deployed, replace the two
+`REPLACE_WITH_STREAMLIT_URL` placeholders in this README with the app's URL.
 
 ## Setup
 
