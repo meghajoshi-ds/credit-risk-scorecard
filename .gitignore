@@ -17,3 +17,9 @@ outputs/html/INTERVIEW_PREP.html
 
 # Personal interview notes, kept local only.
 INTERVIEW_PREP.md
+
+# Dated Lending Club extract used for out-of-time validation (95MB).
+# Re-download with:
+#   kaggle datasets download -d gabrielsantello/lending-club-loan-preprocessed-dataset \
+#     -p data --unzip && mv data/lending_club_loan_two.csv data/lending_club_dated.csv
+data/lending_club_dated.csv
