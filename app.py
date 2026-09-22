@@ -29,31 +29,34 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------- palette ---
-# Values taken unchanged from the data-viz reference palette.
-# Diverging pair (polarity: does a factor push risk up or down) is blue<->red
-# with a neutral gray midpoint. The risk ramp is sequential red: light = low
-# magnitude, dark = high. Every band carries a numeric label, so meaning is
-# never colour-alone.
-INK = "#0b0b0b"
-INK_2 = "#52514e"
+# DARK MODE, selected rather than inverted. These are the data-viz reference
+# palette's own dark steps, chosen for a dark surface - not the light values
+# flipped. Status steps are mode-invariant and clear 3:1 on the dark surface.
+# Every band still carries a numeric label, so colour never carries meaning
+# alone.
+INK = "#ffffff"
+INK_2 = "#c3c2b7"
 INK_3 = "#8a8983"
-SURFACE = "#fcfcfb"
-PAGE_BG = "#eef1f5"
-LINE = "#e6e5e1"
-RISK_UP = "#e34948"     # diverging warm pole
-RISK_DOWN = "#2a78d6"   # diverging cool pole
-NEUTRAL = "#f0efec"     # diverging midpoint
+SURFACE = "#1a1a19"        # documented dark chart surface
+PAGE_BG = "#0f0f0f"
+CARD_BG = "#181817"
+LINE = "#2c2c29"
+ACCENT = "#e50914"          # UI chrome only, never a data encoding
+RISK_UP = "#e66767"         # diverging warm pole, dark step
+RISK_DOWN = "#3987e5"       # diverging cool pole, dark step
+NEUTRAL = "#383835"         # documented dark diverging midpoint
 
-# Sequential red ramp for the five score bands (low -> high risk).
-BAND_RAMP = ["#0ca30c", "#8fbf3f", "#fab219", "#ec835a", "#d03b3b"]
+# Risk ramp across the five bands. Four are the mode-invariant status steps,
+# all of which clear 3:1 on the dark surface.
+BAND_RAMP = ["#0ca30c", "#7fb02f", "#fab219", "#ec835a", "#d03b3b"]
 
 # Score bands: the quintiles of the held-out test set, with the default rate
 # observed in each. Derived from the data in notebook 04, not chosen by eye.
 BANDS = [
     (440, 517, "Bottom 20%", 34.5, BAND_RAMP[4]),
-    (517, 530, "20th–40th", 23.2, BAND_RAMP[3]),
-    (530, 540, "40th–60th", 15.8, BAND_RAMP[2]),
-    (540, 551, "60th–80th", 11.7, BAND_RAMP[1]),
+    (517, 530, "20th\u201340th", 23.2, BAND_RAMP[3]),
+    (530, 540, "40th\u201360th", 15.8, BAND_RAMP[2]),
+    (540, 551, "60th\u201380th", 11.7, BAND_RAMP[1]),
     (551, 603, "Top 20%", 6.7, BAND_RAMP[0]),
 ]
 SCORE_MIN, SCORE_MAX = 440, 610
@@ -63,70 +66,90 @@ st.markdown(
     f"""
     <style>
       .stApp {{ background: {PAGE_BG}; }}
-      .block-container {{ padding-top: 1.2rem; max-width: 1320px; }}
+      .block-container {{ padding-top: 1.1rem; max-width: 1340px; }}
       #MainMenu, footer, header {{ visibility: hidden; }}
 
-      /* Dark hero band, so the page does not open on a wall of white */
+      /* Cinematic hero: deep vignette with a warm accent glow */
       .hero {{
-        background: linear-gradient(135deg, #10243d 0%, #1b3b5f 55%, #24506f 100%);
-        border-radius: 16px; padding: 1.5rem 1.8rem 1.35rem 1.8rem;
-        margin-bottom: 1.1rem; color: #fff;
-        box-shadow: 0 10px 28px rgba(16,36,61,.22);
+        position: relative; overflow: hidden;
+        background:
+          radial-gradient(900px 260px at 12% -30%, rgba(229,9,20,.42) 0%, rgba(229,9,20,0) 62%),
+          linear-gradient(135deg, #1c0508 0%, #140406 45%, #0d0d0d 100%);
+        border: 1px solid #2a1114; border-radius: 14px;
+        padding: 2rem 2.1rem 1.7rem 2.1rem; margin-bottom: 1.2rem;
+        box-shadow: 0 18px 46px rgba(0,0,0,.65);
+      }}
+      .hero-eyebrow {{
+        color: {ACCENT}; font-size: .74rem; font-weight: 800;
+        letter-spacing: .20em; text-transform: uppercase; margin-bottom: .5rem;
       }}
       .hero-title {{
-        font-size: 2.15rem; font-weight: 750; letter-spacing: -0.025em;
-        margin: 0 0 .25rem 0; line-height: 1.12; color: #fff;
+        font-size: 2.9rem; font-weight: 800; letter-spacing: -0.035em;
+        margin: 0 0 .4rem 0; line-height: 1.04; color: #fff;
+        text-shadow: 0 2px 22px rgba(0,0,0,.6);
       }}
-      .hero-sub {{ color: #bcd4ea; font-size: 1.02rem; margin: 0 0 1rem 0; }}
+      .hero-sub {{ color: #cfcfcb; font-size: 1.05rem; margin: 0 0 1.1rem 0; max-width: 60ch; }}
       .badge {{
-        display: inline-block; padding: .3rem .7rem; margin: 0 .35rem .35rem 0;
-        border: 1px solid rgba(255,255,255,.22); border-radius: 999px;
-        background: rgba(255,255,255,.10); font-size: .79rem; color: #d7e6f5;
-        backdrop-filter: blur(2px);
+        display: inline-block; padding: .32rem .75rem; margin: 0 .38rem .38rem 0;
+        border: 1px solid rgba(255,255,255,.16); border-radius: 6px;
+        background: rgba(255,255,255,.07); font-size: .78rem; color: #d8d8d4;
       }}
-      .badge b {{ color: #fff; font-weight: 650; }}
+      .badge b {{ color: #fff; font-weight: 700; }}
 
       .card {{
-        border: 1px solid {LINE}; border-radius: 14px; background: #fff;
-        padding: 1.15rem 1.3rem; margin-bottom: .9rem;
-        box-shadow: 0 2px 10px rgba(16,36,61,.06);
+        border: 1px solid {LINE}; border-radius: 12px; background: {CARD_BG};
+        padding: 1.2rem 1.35rem; margin-bottom: .9rem;
+        box-shadow: 0 6px 20px rgba(0,0,0,.45);
       }}
-      .card-tinted {{ border: none; color: #fff; }}
       .card-label {{
-        font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
-        opacity: .75; margin-bottom: .4rem; font-weight: 700;
+        font-size: .71rem; text-transform: uppercase; letter-spacing: .13em;
+        font-weight: 800; opacity: .82; margin-bottom: .45rem;
       }}
-      .risk-hero {{ font-size: 2.9rem; font-weight: 750; line-height: 1; letter-spacing: -.02em; }}
-      .big-sub {{ font-size: .86rem; opacity: .8; margin-top: .45rem; line-height: 1.5; }}
+      .risk-hero {{ font-size: 3.1rem; font-weight: 800; line-height: 1; letter-spacing: -.03em; }}
+      .big-sub {{ font-size: .87rem; opacity: .9; margin-top: .5rem; line-height: 1.55; }}
 
-      .note {{ color: {INK_3}; font-size: .82rem; line-height: 1.55; }}
+      .note {{ color: {INK_3}; font-size: .82rem; line-height: 1.6; }}
       .insight {{
-        border-left: 4px solid {RISK_DOWN};
-        background: linear-gradient(90deg, #eef5fe 0%, #f8fbff 100%);
-        padding: .85rem 1.05rem; border-radius: 0 10px 10px 0;
-        font-size: .89rem; color: {INK_2}; margin: .6rem 0 1rem 0;
+        border-left: 3px solid {ACCENT};
+        background: linear-gradient(90deg, rgba(229,9,20,.11) 0%, rgba(229,9,20,.02) 100%);
+        padding: .9rem 1.1rem; border-radius: 0 10px 10px 0;
+        font-size: .89rem; color: {INK_2}; margin: .7rem 0 1rem 0;
       }}
+      .insight b {{ color: #fff; }}
       .reason-row {{
-        display: grid; grid-template-columns: 34px 1fr auto; gap: .7rem;
-        align-items: center; padding: .6rem .2rem; border-bottom: 1px solid {LINE};
+        display: grid; grid-template-columns: 34px 1fr auto; gap: .8rem;
+        align-items: center; padding: .65rem .2rem; border-bottom: 1px solid {LINE};
       }}
       .rank {{
-        width: 26px; height: 26px; border-radius: 8px; background: {RISK_UP}1a;
-        color: {RISK_UP}; font-weight: 750; font-size: .82rem;
+        width: 27px; height: 27px; border-radius: 7px;
+        background: rgba(229,9,20,.18); color: #ff6b73;
+        font-weight: 800; font-size: .83rem;
         display: flex; align-items: center; justify-content: center;
       }}
-      .reason-name {{ font-size: .95rem; color: {INK}; font-weight: 500; }}
+      .reason-name {{ font-size: .95rem; color: #fff; font-weight: 500; }}
       .reason-val {{
-        font-size: .82rem; color: {INK_2}; font-weight: 600;
-        background: {NEUTRAL}; padding: .18rem .55rem; border-radius: 6px;
+        font-size: .82rem; color: {INK_2}; font-weight: 700;
+        background: {NEUTRAL}; padding: .2rem .6rem; border-radius: 6px;
       }}
-      h3 {{ font-size: 1.1rem !important; font-weight: 700 !important; color: {INK} !important; }}
-      .stTabs [data-baseweb="tab-list"] {{ gap: .4rem; }}
+      h3 {{ font-size: 1.12rem !important; font-weight: 750 !important; color: #fff !important; }}
+
+      .stTabs [data-baseweb="tab-list"] {{ gap: .5rem; border-bottom: 1px solid {LINE}; }}
       .stTabs [data-baseweb="tab"] {{
-        font-size: .95rem; font-weight: 600; background: #fff;
-        border: 1px solid {LINE}; border-radius: 10px 10px 0 0; padding: .3rem 1rem;
+        font-size: .95rem; font-weight: 650; background: transparent;
+        color: {INK_3}; padding: .4rem .2rem;
       }}
-      section[data-testid="stSidebar"] {{ background: #f7f9fb; border-right: 1px solid {LINE}; }}
+      .stTabs [aria-selected="true"] {{ color: #fff !important; }}
+      .stTabs [data-baseweb="tab-highlight"] {{ background: {ACCENT}; }}
+
+      section[data-testid="stSidebar"] {{
+        background: #121211; border-right: 1px solid {LINE};
+      }}
+      section[data-testid="stSidebar"] h3 {{ color: #fff !important; }}
+      .stButton button {{
+        border: 1px solid {LINE}; background: #201f1e; color: #eee;
+        font-weight: 650; border-radius: 8px;
+      }}
+      .stButton button:hover {{ border-color: {ACCENT}; color: #fff; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -281,7 +304,8 @@ def ink_on(hex_color):
 
 
 def darken(hex_color, factor=0.62):
-    """A darker step of a band colour, for text on a white surface."""
+    """A darker step of a band colour. Used for the gradient's far end, where a
+    flat fill would look plastic; not for text on the dark surface."""
     h = hex_color.lstrip("#")
     rgb = [max(0, min(255, int(int(h[i:i + 2], 16) * factor))) for i in (0, 2, 4)]
     return "#%02x%02x%02x" % tuple(rgb)
@@ -325,7 +349,7 @@ def dial_svg(score, prob, band_color, band_label):
 
     frac = percentile_of(score)
     mx, my = pt(frac)
-    parts.append(f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="12" fill="#fff"/>')
+    parts.append(f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="12" fill="{CARD_BG}"/>')
     parts.append(f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="8.5" fill="{band_color}"/>')
 
     parts.append(
@@ -338,7 +362,7 @@ def dial_svg(score, prob, band_color, band_label):
     )
     parts.append(
         f'<text x="{cx}" y="{cy + 8}" text-anchor="middle" font-size="13" font-weight="700" '
-        f'fill="{darken(band_color)}" font-family="system-ui,sans-serif">{band_label.upper()}</text>'
+        f'fill="{band_color}" font-family="system-ui,sans-serif">{band_label.upper()}</text>'
     )
     lx, ly = pt(0)
     rx, ry = pt(1)
@@ -398,7 +422,7 @@ def gauge_svg(score):
     # 2px surface ring keeps the marker legible over any band colour
     parts.append(
         f'<rect x="{pos - 2.5:.1f}" y="{track_y - 3}" width="5" height="{track_h + 6}" '
-        f'rx="2.5" fill="{INK}" stroke="{SURFACE}" stroke-width="2"/>'
+        f'rx="2.5" fill="{INK}" stroke="{CARD_BG}" stroke-width="2"/>'
     )
     parts.append(
         f'<text x="{pos:.1f}" y="{track_y - 26}" text-anchor="middle" font-size="13" '
@@ -460,6 +484,7 @@ def contributions_svg(contrib, values, labels, top_n=9):
 # ------------------------------------------------------------------- page ---
 st.markdown(
     '<div class="hero">'
+    '<div class="hero-eyebrow">Lending Club &middot; default prediction</div>'
     '<div class="hero-title">Credit Risk Scorecard</div>'
     '<div class="hero-sub">Score a loan applicant, and see exactly which factors '
     'drove the decision.</div>'
