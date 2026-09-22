@@ -9,3 +9,6 @@ data/lending_club_clean.csv
 
 # Regenerable by re-running notebook 04.
 outputs/models/
+
+# Local preview only; GitHub renders README.md directly.
+outputs/html/README.html
