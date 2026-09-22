@@ -38,6 +38,7 @@ INK = "#0b0b0b"
 INK_2 = "#52514e"
 INK_3 = "#8a8983"
 SURFACE = "#fcfcfb"
+PAGE_BG = "#eef1f5"
 LINE = "#e6e5e1"
 RISK_UP = "#e34948"     # diverging warm pole
 RISK_DOWN = "#2a78d6"   # diverging cool pole
@@ -61,56 +62,71 @@ BASE_RATE = 18.3
 st.markdown(
     f"""
     <style>
-      .block-container {{ padding-top: 2.2rem; max-width: 1280px; }}
-      #MainMenu, footer {{ visibility: hidden; }}
+      .stApp {{ background: {PAGE_BG}; }}
+      .block-container {{ padding-top: 1.2rem; max-width: 1320px; }}
+      #MainMenu, footer, header {{ visibility: hidden; }}
 
+      /* Dark hero band, so the page does not open on a wall of white */
+      .hero {{
+        background: linear-gradient(135deg, #10243d 0%, #1b3b5f 55%, #24506f 100%);
+        border-radius: 16px; padding: 1.5rem 1.8rem 1.35rem 1.8rem;
+        margin-bottom: 1.1rem; color: #fff;
+        box-shadow: 0 10px 28px rgba(16,36,61,.22);
+      }}
       .hero-title {{
-        font-size: 2.05rem; font-weight: 700; letter-spacing: -0.02em;
-        color: {INK}; margin: 0 0 .3rem 0; line-height: 1.15;
+        font-size: 2.15rem; font-weight: 750; letter-spacing: -0.025em;
+        margin: 0 0 .25rem 0; line-height: 1.12; color: #fff;
       }}
-      .hero-sub {{ color: {INK_2}; font-size: 1rem; margin: 0 0 .9rem 0; }}
-
+      .hero-sub {{ color: #bcd4ea; font-size: 1.02rem; margin: 0 0 1rem 0; }}
       .badge {{
-        display: inline-block; padding: .22rem .6rem; margin: 0 .3rem .3rem 0;
-        border: 1px solid {LINE}; border-radius: 999px; background: {SURFACE};
-        font-size: .78rem; color: {INK_2};
+        display: inline-block; padding: .3rem .7rem; margin: 0 .35rem .35rem 0;
+        border: 1px solid rgba(255,255,255,.22); border-radius: 999px;
+        background: rgba(255,255,255,.10); font-size: .79rem; color: #d7e6f5;
+        backdrop-filter: blur(2px);
       }}
-      .badge b {{ color: {INK}; font-weight: 600; }}
+      .badge b {{ color: #fff; font-weight: 650; }}
 
       .card {{
-        border: 1px solid {LINE}; border-radius: 12px; background: {SURFACE};
-        padding: 1.1rem 1.25rem; margin-bottom: .9rem;
+        border: 1px solid {LINE}; border-radius: 14px; background: #fff;
+        padding: 1.15rem 1.3rem; margin-bottom: .9rem;
+        box-shadow: 0 2px 10px rgba(16,36,61,.06);
       }}
+      .card-tinted {{ border: none; color: #fff; }}
       .card-label {{
-        font-size: .74rem; text-transform: uppercase; letter-spacing: .08em;
-        color: {INK_3}; margin-bottom: .35rem; font-weight: 600;
+        font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+        opacity: .75; margin-bottom: .4rem; font-weight: 700;
       }}
-      .score-hero {{
-        font-size: 3.6rem; font-weight: 700; line-height: 1;
-        letter-spacing: -0.03em; color: {INK};
-      }}
-      .score-unit {{ font-size: 1rem; color: {INK_3}; font-weight: 500; }}
-      .risk-hero {{ font-size: 2.1rem; font-weight: 700; color: {INK}; line-height: 1.1; }}
+      .risk-hero {{ font-size: 2.9rem; font-weight: 750; line-height: 1; letter-spacing: -.02em; }}
+      .big-sub {{ font-size: .86rem; opacity: .8; margin-top: .45rem; line-height: 1.5; }}
 
-      .verdict {{
-        display: flex; align-items: center; gap: .55rem;
-        padding: .7rem .9rem; border-radius: 10px; font-weight: 600;
-        font-size: .95rem; border: 1px solid;
-      }}
-      .note {{ color: {INK_3}; font-size: .8rem; line-height: 1.5; }}
+      .note {{ color: {INK_3}; font-size: .82rem; line-height: 1.55; }}
       .insight {{
-        border-left: 3px solid {RISK_DOWN}; background: #f6f9fe;
-        padding: .7rem .9rem; border-radius: 0 8px 8px 0;
-        font-size: .88rem; color: {INK_2}; margin: .5rem 0 .9rem 0;
+        border-left: 4px solid {RISK_DOWN};
+        background: linear-gradient(90deg, #eef5fe 0%, #f8fbff 100%);
+        padding: .85rem 1.05rem; border-radius: 0 10px 10px 0;
+        font-size: .89rem; color: {INK_2}; margin: .6rem 0 1rem 0;
       }}
       .reason-row {{
-        display: grid; grid-template-columns: 1fr 120px; gap: .6rem;
-        align-items: center; padding: .42rem 0; border-bottom: 1px solid {LINE};
+        display: grid; grid-template-columns: 34px 1fr auto; gap: .7rem;
+        align-items: center; padding: .6rem .2rem; border-bottom: 1px solid {LINE};
       }}
-      .reason-name {{ font-size: .9rem; color: {INK}; }}
-      .reason-val {{ font-size: .78rem; color: {INK_3}; }}
-      h3 {{ font-size: 1.05rem !important; font-weight: 650 !important; color: {INK} !important; }}
-      .stTabs [data-baseweb="tab"] {{ font-size: .95rem; font-weight: 550; }}
+      .rank {{
+        width: 26px; height: 26px; border-radius: 8px; background: {RISK_UP}1a;
+        color: {RISK_UP}; font-weight: 750; font-size: .82rem;
+        display: flex; align-items: center; justify-content: center;
+      }}
+      .reason-name {{ font-size: .95rem; color: {INK}; font-weight: 500; }}
+      .reason-val {{
+        font-size: .82rem; color: {INK_2}; font-weight: 600;
+        background: {NEUTRAL}; padding: .18rem .55rem; border-radius: 6px;
+      }}
+      h3 {{ font-size: 1.1rem !important; font-weight: 700 !important; color: {INK} !important; }}
+      .stTabs [data-baseweb="tab-list"] {{ gap: .4rem; }}
+      .stTabs [data-baseweb="tab"] {{
+        font-size: .95rem; font-weight: 600; background: #fff;
+        border: 1px solid {LINE}; border-radius: 10px 10px 0 0; padding: .3rem 1rem;
+      }}
+      section[data-testid="stSidebar"] {{ background: #f7f9fb; border-right: 1px solid {LINE}; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -251,6 +267,90 @@ def band_for(score):
     return BANDS[-1][2], BANDS[-1][3], BANDS[-1][4]
 
 
+def _luminance(hex_color):
+    """WCAG relative luminance, used to pick legible text over a band colour."""
+    h = hex_color.lstrip("#")
+    rgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in rgb]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def ink_on(hex_color):
+    """Text colour with adequate contrast against a filled band colour."""
+    return "#ffffff" if _luminance(hex_color) < 0.42 else "#14212e"
+
+
+def darken(hex_color, factor=0.62):
+    """A darker step of a band colour, for text on a white surface."""
+    h = hex_color.lstrip("#")
+    rgb = [max(0, min(255, int(int(h[i:i + 2], 16) * factor))) for i in (0, 2, 4)]
+    return "#%02x%02x%02x" % tuple(rgb)
+
+
+def percentile_of(score):
+    """Position of a score across the five equal-population bands, 0..1."""
+    for i, (lo, hi, *_rest) in enumerate(BANDS):
+        if score < hi or i == len(BANDS) - 1:
+            frac = float(np.clip((score - lo) / max(hi - lo, 1), 0, 1))
+            return (i + frac) / len(BANDS)
+    return 1.0
+
+
+def dial_svg(score, prob, band_color, band_label):
+    """Radial score dial: the arc is segmented by the five population bands and
+    a marker sits at this applicant's position. The number is the headline; the
+    arc supplies context that a bare number cannot."""
+    W, H = 340, 215
+    cx, cy, r = W / 2, 172.0, 128.0
+    sweep = 180.0
+    stroke = 20
+
+    def pt(frac):
+        a = np.radians(180 - sweep * frac)
+        return cx + r * np.cos(a), cy - r * np.sin(a)
+
+    def arc(f0, f1, color, width, opacity=1.0):
+        x0, y0 = pt(f0)
+        x1, y1 = pt(f1)
+        large = 1 if (f1 - f0) > 0.5 else 0
+        return (f'<path d="M {x0:.2f} {y0:.2f} A {r} {r} 0 {large} 1 {x1:.2f} {y1:.2f}" '
+                f'fill="none" stroke="{color}" stroke-width="{width}" '
+                f'stroke-linecap="butt" opacity="{opacity}"/>')
+
+    parts = []
+    n = len(BANDS)
+    for i, (_lo, _hi, _label, _rate, color) in enumerate(BANDS):
+        pad = 0.006
+        parts.append(arc(i / n + pad, (i + 1) / n - pad, color, stroke, 0.95))
+
+    frac = percentile_of(score)
+    mx, my = pt(frac)
+    parts.append(f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="12" fill="#fff"/>')
+    parts.append(f'<circle cx="{mx:.2f}" cy="{my:.2f}" r="8.5" fill="{band_color}"/>')
+
+    parts.append(
+        f'<text x="{cx}" y="{cy - 40}" text-anchor="middle" font-size="60" font-weight="750" '
+        f'fill="{INK}" font-family="system-ui,sans-serif" letter-spacing="-2">{score}</text>'
+    )
+    parts.append(
+        f'<text x="{cx}" y="{cy - 16}" text-anchor="middle" font-size="12.5" '
+        f'fill="{INK_3}" font-family="system-ui,sans-serif">credit score &#183; {prob:.1%} risk</text>'
+    )
+    parts.append(
+        f'<text x="{cx}" y="{cy + 8}" text-anchor="middle" font-size="13" font-weight="700" '
+        f'fill="{darken(band_color)}" font-family="system-ui,sans-serif">{band_label.upper()}</text>'
+    )
+    lx, ly = pt(0)
+    rx, ry = pt(1)
+    parts.append(f'<text x="{lx - 2:.0f}" y="{ly + 20}" text-anchor="middle" font-size="10.5" '
+                 f'fill="{INK_3}" font-family="system-ui,sans-serif">highest risk</text>')
+    parts.append(f'<text x="{rx + 2:.0f}" y="{ry + 20}" text-anchor="middle" font-size="10.5" '
+                 f'fill="{INK_3}" font-family="system-ui,sans-serif">lowest risk</text>')
+
+    return (f'<svg viewBox="0 0 {W} {H}" width="100%" height="{H}" role="img" '
+            f'aria-label="Score {score}, {band_label}">' + "".join(parts) + "</svg>")
+
+
 def gauge_svg(score):
     """Where this applicant sits among applicants.
 
@@ -259,19 +359,14 @@ def gauge_svg(score):
     within its own band, so position reads as percentile. Each band carries its
     observed default rate, so colour never carries meaning alone.
     """
-    W, H = 760, 104
+    W, H = 760, 112
     pad_l, pad_r = 10, 10
-    track_y, track_h = 46, 24
+    track_y, track_h = 56, 24
     inner = W - pad_l - pad_r
     seg = inner / len(BANDS)
 
     # Percentile position: which band, then how far through it.
-    pos = pad_l
-    for i, (lo, hi, *_rest) in enumerate(BANDS):
-        if score < hi or i == len(BANDS) - 1:
-            frac = np.clip((score - lo) / max(hi - lo, 1), 0, 1)
-            pos = pad_l + (i + frac) * seg
-            break
+    pos = pad_l + percentile_of(score) * len(BANDS) * seg
 
     parts = []
     for i, (lo, hi, label, rate, color) in enumerate(BANDS):
@@ -306,7 +401,7 @@ def gauge_svg(score):
         f'rx="2.5" fill="{INK}" stroke="{SURFACE}" stroke-width="2"/>'
     )
     parts.append(
-        f'<text x="{pos:.1f}" y="{track_y - 17}" text-anchor="middle" font-size="13" '
+        f'<text x="{pos:.1f}" y="{track_y - 26}" text-anchor="middle" font-size="13" '
         f'font-weight="700" fill="{INK}" font-family="system-ui,sans-serif">{score}</text>'
     )
     return (f'<svg viewBox="0 0 {W} {H}" width="100%" height="{H}" '
@@ -363,22 +458,20 @@ def contributions_svg(contrib, values, labels, top_n=9):
 
 
 # ------------------------------------------------------------------- page ---
-st.markdown('<div class="hero-title">Credit Risk Scorecard</div>', unsafe_allow_html=True)
 st.markdown(
+    '<div class="hero">'
+    '<div class="hero-title">Credit Risk Scorecard</div>'
     '<div class="hero-sub">Score a loan applicant, and see exactly which factors '
-    'drove the decision.</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
+    'drove the decision.</div>'
     '<span class="badge">Model <b>LightGBM</b></span>'
     '<span class="badge">AUC <b>0.690</b></span>'
     '<span class="badge">KS <b>0.283</b></span>'
     '<span class="badge">Trained on <b>163,987 loans</b></span>'
     '<span class="badge">Calibrated: predicts <b>18.25%</b> vs actual <b>18.3%</b></span>'
-    '<span class="badge">Excludes <b>int_rate</b> (leakage)</span>',
+    '<span class="badge">Excludes <b>int_rate</b> (leakage)</span>'
+    '</div>',
     unsafe_allow_html=True,
 )
-st.write("")
 
 try:
     model, config, explainer = load_artifacts()
@@ -454,56 +547,57 @@ contrib, labels, values = merge_contributions(contrib_raw, values_raw)
 tab_decision, tab_why, tab_model = st.tabs(["Decision", "Why this score", "About the model"])
 
 with tab_decision:
-    c1, c2, c3 = st.columns([1, 1, 1.5])
+    c1, c2 = st.columns([1, 1.25])
     with c1:
         st.markdown(
-            f'<div class="card"><div class="card-label">Credit score</div>'
-            f'<div class="score-hero">{score}</div>'
-            f'<div class="score-unit">of 300–850</div></div>',
+            f'<div class="card" style="padding:.6rem .8rem 1rem .8rem">'
+            f'{dial_svg(score, prob, band_color, band_label)}</div>',
             unsafe_allow_html=True,
         )
     with c2:
-        st.markdown(
-            f'<div class="card"><div class="card-label">Default probability</div>'
-            f'<div class="risk-hero">{prob:.1%}</div>'
-            f'<div class="note" style="margin-top:.35rem">Portfolio average {BASE_RATE}%</div></div>',
-            unsafe_allow_html=True,
-        )
-    with c3:
         vs = prob * 100 / BASE_RATE
         st.markdown(
-            f'<div class="card"><div class="card-label">Portfolio position</div>'
-            f'<div class="verdict" style="border-color:{band_color}; color:{INK}; '
-            f'background:{band_color}18;">'
-            f'<span style="width:10px;height:10px;border-radius:50%;background:{band_color};'
-            f'display:inline-block"></span>{band_label} of applicants</div>'
-            f'<div class="note" style="margin-top:.5rem">Loans in this band defaulted '
-            f'<b>{band_rate}%</b> of the time. This applicant scores <b>{vs:.1f}x</b> '
-            f'the portfolio average risk.</div></div>',
+            f'<div class="card card-tinted" style="background:linear-gradient(135deg,'
+            f'{band_color} 0%, {darken(band_color, 0.82)} 100%); color:{ink_on(band_color)}">'
+            f'<div class="card-label">Default probability</div>'
+            f'<div class="risk-hero">{prob:.1%}</div>'
+            f'<div class="big-sub">Portfolio average is {BASE_RATE}%, so this applicant '
+            f'carries <b>{vs:.1f}x</b> the average risk.</div></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="card"><div class="card-label" style="color:{INK_3}">'
+            f'Portfolio position</div>'
+            f'<div style="font-size:1.35rem;font-weight:700;color:{INK};margin-bottom:.3rem">'
+            f'{band_label} of applicants</div>'
+            f'<div class="note">Loans scoring in this band defaulted '
+            f'<b style="color:{INK}">{band_rate}%</b> of the time in the held-out test set. '
+            f'That is an observed outcome, not a prediction.</div></div>',
             unsafe_allow_html=True,
         )
 
     st.markdown("### Where this applicant sits")
-    st.markdown(gauge_svg(score), unsafe_allow_html=True)
+    st.markdown(f'<div class="card">{gauge_svg(score)}</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="note">Each band holds 20% of the held-out test set, so they are drawn '
         'at equal width and position reads as percentile. The figure under each band is '
-        'the default rate <i>actually observed</i> in it, not a prediction.</div>',
+        'the default rate <i>actually observed</i> in it.</div>',
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        '<div class="insight"><b>Why the range is 462–603, not 300–850.</b> '
+        '<div class="insight"><b>Why the range is 462&ndash;603, not 300&ndash;850.</b> '
         'The model reaches AUC 0.69 on 14 coarse application fields, with no credit '
         'bureau score and no payment history. A narrow probability range maps to a '
-        'narrow score range. Rescaling to fill 300–850 would look more familiar but '
+        'narrow score range. Rescaling to fill 300&ndash;850 would look more familiar but '
         'would imply discriminating power the model does not have.</div>',
         unsafe_allow_html=True,
     )
 
 with tab_why:
     st.markdown("### What moved this score")
-    st.markdown(contributions_svg(contrib, values, labels), unsafe_allow_html=True)
+    st.markdown(f'<div class="card">{contributions_svg(contrib, values, labels)}</div>',
+                unsafe_allow_html=True)
     st.markdown(
         '<div class="note">SHAP values: each bar is that factor\'s contribution to '
         '<i>this</i> applicant\'s prediction, and they sum exactly to the model output. '
@@ -527,9 +621,9 @@ with tab_why:
             if isinstance(raw, float):
                 raw = f"{raw:,.2f}".rstrip("0").rstrip(".")
             rows.append(
-                f'<div class="reason-row"><div class="reason-name"><b>{i}.</b> '
-                f'{labels.get(feat, feat)}</div>'
-                f'<div class="reason-val" style="text-align:right">{raw}</div></div>'
+                f'<div class="reason-row"><div class="rank">{i}</div>'
+                f'<div class="reason-name">{labels.get(feat, feat)}</div>'
+                f'<div class="reason-val">{raw}</div></div>'
             )
         st.markdown(f'<div class="card">{"".join(rows)}</div>', unsafe_allow_html=True)
     else:
