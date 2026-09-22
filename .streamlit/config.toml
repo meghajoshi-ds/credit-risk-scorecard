@@ -4,3 +4,8 @@ primaryColor = "#4C72B0"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false

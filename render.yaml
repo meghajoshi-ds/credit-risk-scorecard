@@ -1,0 +1,14 @@
+# Render Blueprint — deploys app.py as a public web service.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: credit-risk-scorecard
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    # Render injects $PORT; Streamlit must bind to it and to 0.0.0.0.
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.5"

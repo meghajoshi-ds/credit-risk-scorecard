@@ -65,7 +65,8 @@ credit-risk-scorecard/
 │   ├── html/                       # rendered copies of each notebook
 │   ├── models/                     # serialised models + scorecard config (committed)
 │   └── model_results.csv
-├── .streamlit/config.toml          # theme for the hosted demo
+├── .streamlit/config.toml          # theme and headless mode
+├── render.yaml                     # one-click deploy blueprint
 ├── app.py                          # Phase 10: Streamlit demo
 ├── requirements.txt                # runtime dependencies only
 ├── requirements-dev.txt            # notebook dependencies
@@ -397,16 +398,30 @@ after a clone without executing any notebooks first.
 
 ### Hosting it publicly
 
-The repository is configured for [Streamlit Community
-Cloud](https://share.streamlit.io), which is free:
+Two options, both free. The repository is configured for either.
 
-1. Sign in at share.streamlit.io with GitHub, granting it access to your repositories
-2. **New app**, then pick this repository, branch `main`, main file `app.py`
-3. **Deploy**. The first build takes a few minutes
+**Render** (recommended, since services are public by default):
 
-`requirements.txt` holds only the runtime dependencies so the build stays fast,
-the models are committed, and `.streamlit/config.toml` sets the theme. Once the
-app is live, add its URL to the top of this README.
+1. Sign in at [render.com](https://render.com) with GitHub
+2. **New** then **Blueprint**, and pick this repository
+3. Render reads `render.yaml` and fills in the build and start commands
+4. **Apply**. The first build takes a few minutes
+
+On the free tier the service sleeps after about 15 minutes of inactivity, so
+the first visit after a quiet spell takes roughly 50 seconds to wake. Every
+visit after that is instant.
+
+**Streamlit Community Cloud** ([share.streamlit.io](https://share.streamlit.io)):
+sign in with GitHub, choose **New app**, then this repository, branch `main`,
+main file `app.py`. Faster to set up, but check the app's sharing setting
+afterwards: apps can default to requiring a sign-in, which is easy to miss
+because the owner is always let through. Test the URL in a private browser
+window to see what a visitor actually gets.
+
+Either way, `requirements.txt` holds only the runtime dependencies so the build
+stays fast, the models are committed, and `.streamlit/config.toml` sets the
+theme and headless mode. Once the app is live, add its URL to the top of this
+README.
 
 ## Setup
 
