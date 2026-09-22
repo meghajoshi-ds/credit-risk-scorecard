@@ -1,0 +1,2 @@
+# Rendered notebook exports: exclude from language stats so the repo shows as Python/Jupyter
+outputs/html/** linguist-generated
