@@ -504,8 +504,12 @@ except FileNotFoundError:
     st.error("Model artifacts not found. Run `notebooks/04_modelling.ipynb` first.")
     st.stop()
 
-if "preset" not in st.session_state:
+# Seed the inputs once. The flag is essential: without it this block re-runs on
+# every interaction and silently resets every widget back to the preset, which
+# makes the whole sidebar appear frozen.
+if "initialised" not in st.session_state:
     st.session_state.update(PRESETS["Typical"])
+    st.session_state["initialised"] = True
 
 with st.sidebar:
     st.markdown("### Try an example")
